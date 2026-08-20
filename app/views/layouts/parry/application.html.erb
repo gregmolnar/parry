@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Parry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <%= csrf_meta_tags %>
+    <style>
+      :root {
+        --parry-bg: #f5f6f8;
+        --parry-surface: #ffffff;
+        --parry-border: #dfe3e8;
+        --parry-text: #1c1e21;
+        --parry-muted: #6b7280;
+        --parry-accent: #2f6feb;
+        --parry-danger: #c0392b;
+        --parry-danger-bg: #fdecea;
+        --parry-success: #1e7f4f;
+        --parry-success-bg: #e7f6ee;
+        --parry-warning-bg: #fdf3d8;
+        --parry-warning: #8a6100;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --parry-bg: #16181d;
+          --parry-surface: #1e2127;
+          --parry-border: #333842;
+          --parry-text: #e7e9ee;
+          --parry-muted: #9aa1ad;
+          --parry-accent: #6ea0ff;
+          --parry-danger: #ff8a7a;
+          --parry-danger-bg: #3a2320;
+          --parry-success: #7fd6a6;
+          --parry-success-bg: #1d3129;
+          --parry-warning-bg: #3a3220;
+          --parry-warning: #e5c46b;
+        }
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--parry-bg);
+        color: var(--parry-text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      a { color: var(--parry-accent); }
+
+      .parry-header {
+        background: var(--parry-surface);
+        border-bottom: 1px solid var(--parry-border);
+      }
+
+      .parry-header-inner,
+      .parry-main {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+
+      .parry-header-inner {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        height: 60px;
+      }
+
+      .parry-brand {
+        font-weight: 700;
+        font-size: 18px;
+        letter-spacing: 0.02em;
+        text-decoration: none;
+        color: var(--parry-text);
+      }
+
+      .parry-nav { display: flex; gap: 4px; }
+
+      .parry-nav a {
+        padding: 6px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--parry-muted);
+        font-weight: 500;
+      }
+
+      .parry-nav a:hover { background: var(--parry-bg); }
+
+      .parry-nav a.is-active {
+        background: var(--parry-bg);
+        color: var(--parry-text);
+      }
+
+      .parry-main { padding-top: 28px; padding-bottom: 60px; }
+
+      .parry-page-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+
+      .parry-page-head h1 { font-size: 22px; margin: 0; }
+
+      .parry-page-head p { margin: 4px 0 0; color: var(--parry-muted); font-size: 14px; }
+
+      .parry-card {
+        background: var(--parry-surface);
+        border: 1px solid var(--parry-border);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .parry-card + .parry-card { margin-top: 20px; }
+
+      table { width: 100%; border-collapse: collapse; }
+
+      .parry-table-scroll { overflow-x: auto; }
+
+      .parry-table-scroll table { min-width: 760px; }
+
+      .parry-table-scroll .parry-actions {
+        position: sticky;
+        right: 0;
+        z-index: 1;
+        background: var(--parry-surface);
+        box-shadow: -8px 0 8px -8px rgba(0, 0, 0, 0.2);
+      }
+
+      th, td {
+        text-align: left;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--parry-border);
+        vertical-align: middle;
+      }
+
+      th {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--parry-muted);
+        font-weight: 600;
+      }
+
+      tbody tr:last-child td { border-bottom: none; }
+
+      td.parry-actions { text-align: right; white-space: nowrap; }
+
+      td.parry-actions form { display: inline-block; margin-left: 8px; }
+
+      code, .parry-mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 13px;
+      }
+
+      .parry-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .parry-tag--blocklist, .parry-tag--blocked, .parry-tag--honeypot, .parry-tag--caught {
+        background: var(--parry-danger-bg);
+        color: var(--parry-danger);
+      }
+      .parry-tag--safelist { background: var(--parry-success-bg); color: var(--parry-success); }
+      .parry-tag--regex {
+        background: var(--parry-bg);
+        color: var(--parry-muted);
+        border: 1px solid var(--parry-border);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      .parry-tag--throttle { background: var(--parry-warning-bg); color: var(--parry-warning); }
+
+      .parry-muted { color: var(--parry-muted); }
+
+      .parry-btn {
+        display: inline-block;
+        padding: 7px 14px;
+        border-radius: 7px;
+        border: 1px solid var(--parry-border);
+        background: var(--parry-surface);
+        color: var(--parry-text);
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .parry-btn:hover { border-color: var(--parry-muted); }
+
+      .parry-btn--primary {
+        background: var(--parry-accent);
+        border-color: var(--parry-accent);
+        color: #fff;
+      }
+
+      .parry-btn--danger { color: var(--parry-danger); }
+
+      .parry-flash {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 14px;
+      }
+
+      .parry-flash--notice { background: var(--parry-success-bg); color: var(--parry-success); }
+      .parry-flash--alert { background: var(--parry-danger-bg); color: var(--parry-danger); }
+
+      .parry-empty {
+        padding: 48px 16px;
+        text-align: center;
+        color: var(--parry-muted);
+      }
+
+      .parry-form { padding: 20px; max-width: 560px; }
+
+      .parry-field { margin-bottom: 18px; }
+
+      .parry-field label {
+        display: block;
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
+
+      .parry-field input[type="text"],
+      .parry-field input[type="number"],
+      .parry-field select {
+        width: 100%;
+        padding: 9px 11px;
+        border-radius: 7px;
+        border: 1px solid var(--parry-border);
+        background: var(--parry-bg);
+        color: var(--parry-text);
+        font-size: 14px;
+        font-family: inherit;
+      }
+
+      .parry-hint { display: block; margin-top: 5px; font-size: 13px; color: var(--parry-muted); }
+
+      .parry-form-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .parry-errors {
+        background: var(--parry-danger-bg);
+        color: var(--parry-danger);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+        font-size: 14px;
+      }
+
+      .parry-errors ul { margin: 6px 0 0; padding-left: 18px; }
+
+      .parry-head-actions { display: flex; gap: 8px; align-items: center; }
+
+      .parry-choice {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 400;
+        margin-bottom: 6px;
+      }
+
+      .parry-choice input { margin: 0; }
+
+      .parry-field textarea {
+        width: 100%;
+        padding: 9px 11px;
+        border-radius: 7px;
+        border: 1px solid var(--parry-border);
+        background: var(--parry-bg);
+        color: var(--parry-text);
+        font-size: 13px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        resize: vertical;
+      }
+
+      .parry-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 12px 16px;
+        border-top: 1px solid var(--parry-border);
+        font-size: 14px;
+      }
+
+      .parry-pagination-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .parry-btn--disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+
+      .parry-row-group { display: flex; gap: 16px; }
+
+      .parry-row-group > * { flex: 1; }
+    </style>
+  </head>
+
+  <body>
+    <header class="parry-header">
+      <div class="parry-header-inner">
+        <a class="parry-brand" href="<%= root_path %>">Parry</a>
+        <nav class="parry-nav">
+          <%= link_to "Rules", rules_path, class: ("is-active" if controller_name == "rules") %>
+          <%= link_to "Blocked hosts", blocked_hosts_path, class: ("is-active" if controller_name == "blocked_hosts") %>
+        </nav>
+      </div>
+    </header>
+
+    <main class="parry-main">
+      <% if flash[:notice] %>
+        <div class="parry-flash parry-flash--notice"><%= flash[:notice] %></div>
+      <% end %>
+      <% if flash[:alert] %>
+        <div class="parry-flash parry-flash--alert"><%= flash[:alert] %></div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+  </body>
+</html>

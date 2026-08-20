@@ -1,0 +1,80 @@
+<div class="parry-page-head">
+  <div>
+    <h1>Rules</h1>
+    <p>Blocklists, safelists and throttles applied by Rack::Attack. Changes take effect immediately.</p>
+  </div>
+  <div class="parry-head-actions">
+    <%= link_to "Import", import_rules_path, class: "parry-btn" %>
+    <%= link_to "Export", export_rules_path, class: "parry-btn" %>
+    <%= link_to "New rule", new_rule_path, class: "parry-btn parry-btn--primary" %>
+  </div>
+</div>
+
+<div class="parry-card">
+  <% if @rules.empty? %>
+    <div class="parry-empty">
+      <p>No rules yet.</p>
+      <%= link_to "Add the first one", new_rule_path, class: "parry-btn" %>
+      <%= link_to "or import a file", import_rules_path, class: "parry-muted" %>
+    </div>
+  <% else %>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Target</th>
+          <th>Details</th>
+          <th>Added</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @rules.each do |rule| %>
+          <tr>
+            <td><%= parry_kind_label(rule.kind) %></td>
+            <td>
+              <% if rule.throttle? %>
+                <span class="parry-mono"><%= rule.name %></span>
+              <% elsif rule.honeypot? %>
+                <span class="parry-mono"><%= rule.path %></span>
+                <% if rule.regex_match? %>
+                  <span class="parry-tag parry-tag--regex">regex</span>
+                <% end %>
+                <% if rule.name.present? %>
+                  <div class="parry-muted"><%= rule.name %></div>
+                <% end %>
+              <% else %>
+                <span class="parry-mono"><%= rule.value %></span>
+                <% if rule.name.present? %>
+                  <div class="parry-muted"><%= rule.name %></div>
+                <% end %>
+              <% end %>
+            </td>
+            <td class="parry-muted">
+              <% if rule.throttle? %>
+                <%= rule.limit %> requests per <%= parry_period(rule.period) %> per IP
+                <% if rule.path.present? %>
+                  on <span class="parry-mono"><%= rule.path %></span>
+                <% end %>
+              <% elsif rule.honeypot? %>
+                <%= rule.regex_match? ? "Blocklists any host whose path matches" : "Blocklists any host requesting this path" %>
+              <% elsif rule.kind == "safelist" %>
+                Always allowed
+              <% else %>
+                Always blocked
+              <% end %>
+            </td>
+            <td class="parry-muted"><%= parry_time(rule.created_at_time) %></td>
+            <td class="parry-actions">
+              <%= link_to "Edit", edit_rule_path(rule.id), class: "parry-btn" %>
+              <%= button_to "Delete", rule_path(rule.id), method: :delete,
+                    class: "parry-btn parry-btn--danger",
+                    form: { data: { turbo_confirm: "Delete this rule?" } },
+                    data: { confirm: "Delete this rule?" } %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>

@@ -1,0 +1,101 @@
+<%= form_with model: rule, url: url, method: method, scope: :rule, class: "parry-form" do |form| %>
+  <% if rule.errors.any? %>
+    <div class="parry-errors">
+      <strong><%= pluralize(rule.errors.count, "error") %> prevented this rule from being saved:</strong>
+      <ul>
+        <% rule.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="parry-field">
+    <%= form.label :kind, "Rule type" %>
+    <%= form.select :kind, Parry::Rule::KINDS.map { |kind| [kind.titleize, kind] }, {}, data: { parry_kind_select: true } %>
+    <span class="parry-hint">
+      Blocklisted requests get a 403, throttled ones a 429. A honeypot blocklists any host that requests its path.
+      A safelist entry wins over all of them.
+    </span>
+  </div>
+
+  <div class="parry-field" data-parry-when="blocklist safelist">
+    <%= form.label :value, "IP address or CIDR range" %>
+    <%= form.text_field :value, placeholder: "203.0.113.4 or 203.0.113.0/24" %>
+    <span class="parry-hint">Both IPv4 and IPv6 are accepted.</span>
+  </div>
+
+  <div class="parry-field">
+    <%= form.label :name, "Name" %>
+    <%= form.text_field :name, placeholder: "Scraper from the datacenter range" %>
+    <span class="parry-hint" data-parry-when="blocklist safelist honeypot">Optional note shown in the rules list.</span>
+    <span class="parry-hint" data-parry-when="throttle">Required, and used as the Rack::Attack throttle name.</span>
+  </div>
+
+  <div class="parry-row-group" data-parry-when="throttle">
+    <div class="parry-field">
+      <%= form.label :limit, "Requests" %>
+      <%= form.number_field :limit, min: 1, placeholder: "60" %>
+    </div>
+    <div class="parry-field">
+      <%= form.label :period, "Per (seconds)" %>
+      <%= form.number_field :period, min: 1, placeholder: "60" %>
+    </div>
+  </div>
+
+  <div class="parry-field" data-parry-when="honeypot">
+    <%= form.label :path_match, "Match the path by" %>
+    <%= form.select :path_match,
+          [["Prefix", "prefix"], ["Regular expression", "regex"]],
+          {}, data: { parry_match_select: true } %>
+  </div>
+
+  <div class="parry-field" data-parry-when="throttle honeypot">
+    <%= form.label :path, "Path" %>
+    <%= form.text_field :path, placeholder: "/wp-login.php" %>
+    <span class="parry-hint" data-parry-when="throttle">
+      Optional prefix. Leave blank to throttle every request from an IP.
+    </span>
+    <span data-parry-when="honeypot">
+      <span class="parry-hint" data-parry-when-match="prefix">
+        Required. Every path starting with this springs the honeypot, so pick something no real visitor requests.
+        The host is blocked until you unblock it.
+      </span>
+      <span class="parry-hint" data-parry-when-match="regex">
+        Required. A Ruby regular expression, matched anywhere in the path unless you anchor it -
+        <span class="parry-mono">\.(env|git)</span> catches both <span class="parry-mono">/.env</span> and
+        <span class="parry-mono">/.git/config</span>. Keep it tight: anything a real visitor can reach gets
+        blocked, and the pattern runs on every request.
+      </span>
+    </span>
+  </div>
+
+  <div class="parry-form-actions">
+    <%= form.submit submit_label, class: "parry-btn parry-btn--primary" %>
+    <%= link_to "Cancel", rules_path, class: "parry-muted" %>
+  </div>
+<% end %>
+
+<script>
+  (function () {
+    var kindSelect = document.querySelector("[data-parry-kind-select]");
+    var matchSelect = document.querySelector("[data-parry-match-select]");
+    if (!kindSelect) return;
+
+    function toggle(attribute, current) {
+      document.querySelectorAll("[" + attribute + "]").forEach(function (el) {
+        var wanted = el.getAttribute(attribute).split(" ");
+        el.style.display = wanted.indexOf(current) === -1 ? "none" : "";
+      });
+    }
+
+    function refresh() {
+      toggle("data-parry-when", kindSelect.value);
+      toggle("data-parry-when-match", matchSelect ? matchSelect.value : "prefix");
+    }
+
+    kindSelect.addEventListener("change", refresh);
+    if (matchSelect) matchSelect.addEventListener("change", refresh);
+    refresh();
+  })();
+</script>

@@ -1,0 +1,56 @@
+<div class="parry-page-head">
+  <div>
+    <h1>Import rules</h1>
+    <p>Load rules from a file exported by Parry.</p>
+  </div>
+  <div>
+    <%= link_to "Back to rules", rules_path, class: "parry-btn" %>
+  </div>
+</div>
+
+<div class="parry-card">
+  <%= form_with url: perform_import_rules_path, method: :post, multipart: true, class: "parry-form" do |form| %>
+    <% if @result && !@result.ok? %>
+      <div class="parry-errors">
+        <strong>Nothing was imported:</strong>
+        <ul>
+          <% @result.errors.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="parry-field">
+      <%= form.label :file, "File" %>
+      <%= form.file_field :file, accept: "application/json,.json" %>
+    </div>
+
+    <div class="parry-field">
+      <%= form.label :pasted, "Or paste the file" %>
+      <%= form.text_area :pasted, rows: 8, class: "parry-mono", placeholder: '{"rules": [ ... ]}' %>
+      <span class="parry-hint">Used only when no file is chosen.</span>
+    </div>
+
+    <div class="parry-field">
+      <%= form.label :mode, "What to do with the rules already here" %>
+      <label class="parry-choice">
+        <%= form.radio_button :mode, "merge", checked: params[:mode] != "replace" %>
+        Keep them and add the ones from the file
+      </label>
+      <label class="parry-choice">
+        <%= form.radio_button :mode, "replace" %>
+        Replace them all with the file
+      </label>
+      <span class="parry-hint">
+        Either way it is all or nothing: if a single rule in the file is rejected, nothing is imported and
+        what you have now is left alone.
+      </span>
+    </div>
+
+    <div class="parry-form-actions">
+      <%= form.submit "Import rules", class: "parry-btn parry-btn--primary" %>
+      <%= link_to "Cancel", rules_path, class: "parry-muted" %>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,88 @@
+<div class="parry-page-head">
+  <div>
+    <h1>Blocked hosts</h1>
+    <p>Hosts Rack::Attack blocked or throttled, most recent first.</p>
+  </div>
+</div>
+
+<div class="parry-card">
+  <% if @hosts.empty? %>
+    <div class="parry-empty">
+      <p>Nothing has been blocked or throttled yet.</p>
+    </div>
+  <% else %>
+    <div class="parry-table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>IP</th>
+            <th>Matched</th>
+            <th>Hits</th>
+            <th>Last seen</th>
+            <th>Status</th>
+            <th class="parry-actions"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @hosts.each do |host| %>
+            <tr>
+              <td class="parry-mono"><%= host.ip %></td>
+              <td>
+                <%= host.rule.presence || "—" %>
+                <% if host.path.present? %>
+                  <div class="parry-muted parry-mono"><%= host.path %></div>
+                <% end %>
+              </td>
+              <td><%= host.hits.positive? ? number_with_delimiter(host.hits) : "—" %></td>
+              <td class="parry-muted"><%= parry_time(host.last_seen) %></td>
+              <td>
+                <% if (rule = @rule_set.blocklist_rule_for(host.ip)) %>
+                  <span class="parry-tag parry-tag--blocked">Blocklisted</span>
+                  <div class="parry-muted parry-mono"><%= rule.value %></div>
+                <% elsif (caught = @rule_set.caught_host(host.ip)) %>
+                  <span class="parry-tag parry-tag--caught">Caught</span>
+                  <div class="parry-muted parry-mono"><%= caught.path %></div>
+                <% elsif host.throttled? %>
+                  <span class="parry-tag parry-tag--throttle">Throttled</span>
+                <% else %>
+                  <span class="parry-muted">Not blocked</span>
+                <% end %>
+              </td>
+              <td class="parry-actions">
+                <%= button_to "Unblock", unblock_blocked_hosts_path, params: { ip: host.ip, page: @page },
+                      class: "parry-btn",
+                      form: { data: { turbo_confirm: "Unblock #{host.ip}?" } },
+                      data: { confirm: "Unblock #{host.ip}?" } %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="parry-pagination">
+      <span class="parry-muted">
+        Showing <%= number_with_delimiter(@offset + 1) %>-<%= number_with_delimiter(@offset + @hosts.size) %>
+        of <%= number_with_delimiter(@total) %> <%= "host".pluralize(@total) %>
+      </span>
+
+      <% if @total_pages > 1 %>
+        <span class="parry-pagination-controls">
+          <% if @page > 1 %>
+            <%= link_to "Previous", blocked_hosts_path(page: (@page - 1 if @page > 2)), class: "parry-btn" %>
+          <% else %>
+            <span class="parry-btn parry-btn--disabled">Previous</span>
+          <% end %>
+
+          <span class="parry-muted">Page <%= @page %> of <%= @total_pages %></span>
+
+          <% if @page < @total_pages %>
+            <%= link_to "Next", blocked_hosts_path(page: @page + 1), class: "parry-btn" %>
+          <% else %>
+            <span class="parry-btn parry-btn--disabled">Next</span>
+          <% end %>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
+</div>

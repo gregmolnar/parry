@@ -1,0 +1,10 @@
+services:
+  redis:
+    image: redis:7-alpine
+    # Parry's rules are data, not cache: keep them on disk and outside the
+    # container, so recreating it does not wipe them.
+    command: redis-server --appendonly yes
+    ports:
+      - "6380:6379"
+    volumes:
+      - ./tmp/redis:/data

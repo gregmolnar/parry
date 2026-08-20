@@ -1,0 +1,10 @@
+<div class="parry-page-head">
+  <div>
+    <h1>Edit rule</h1>
+    <p class="parry-mono"><%= @rule.throttle? ? @rule.name : @rule.value %></p>
+  </div>
+</div>
+
+<div class="parry-card">
+  <%= render "form", rule: @rule, url: rule_path(@rule.id), method: :patch, submit_label: "Save rule" %>
+</div>
