@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-16
+
 - Paginate the blocked hosts page, 50 at a time.
 
 - Export and import rules as JSON, from the GUI or through `Parry::RuleTransfer`.
