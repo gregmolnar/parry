@@ -217,6 +217,44 @@ Use it to keep a backup of a hand-built rule set, to move rules from staging to 
 same honeypots across several applications. Rules keep their ids, so re-importing the same file updates the
 rules it already created instead of duplicating them.
 
+## Starter honeypot rules
+
+Import this JSON to set up a starter set of honeypots that catch common scanner probes:
+
+```json
+{
+  "format": 1,
+  "parry_version": "0.1.0",
+  "exported_at": 1792154664,
+  "rules": [
+    {"id": "81b72099bb9ee0b8", "kind": "honeypot", "path": "/wp-admin", "path_match": "prefix", "created_at": 1787485029},
+    {"id": "1cab2f085efd96c2", "kind": "honeypot", "path": "/wp-content", "path_match": "prefix", "created_at": 1787485038},
+    {"id": "319a068bd3ecf2a8", "kind": "honeypot", "path": "/*.php", "path_match": "regex", "created_at": 1787485046},
+    {"id": "45a6a5aa4ce9d553", "kind": "honeypot", "path": "/wp-includes/", "path_match": "prefix", "created_at": 1789592763},
+    {"id": "981ed0b90c9b82ac", "kind": "honeypot", "path": "\\.env", "path_match": "regex", "created_at": 1789592836},
+    {"id": "774556062efe2222", "kind": "honeypot", "path": "\\.ini", "path_match": "regex", "created_at": 1789592872},
+    {"id": "ca7a15b798c13b50", "kind": "honeypot", "path": "\\.action", "path_match": "regex", "created_at": 1789592892},
+    {"id": "ad18ef756734ab61", "kind": "honeypot", "path": "/.git", "path_match": "prefix", "created_at": 1789632673},
+    {"id": "fd4f5f92ceb0f812", "kind": "honeypot", "path": "wlwmanifest\\.xml", "path_match": "regex", "created_at": 1789632707},
+    {"id": "ea747ec75c548815", "kind": "honeypot", "path": "/static", "path_match": "prefix", "created_at": 1789632734},
+    {"id": "f91a2c1cc24a7722", "kind": "honeypot", "path": "/wp-login.php", "path_match": "prefix", "created_at": 1789632748},
+    {"id": "9a81543ea9c5df68", "kind": "honeypot", "path": "/cms", "path_match": "prefix", "created_at": 1789632834},
+    {"id": "5c0b3f04946a1eb9", "kind": "honeypot", "path": "/backup", "path_match": "prefix", "created_at": 1792154602},
+    {"id": "61a8b763a94d5154", "kind": "honeypot", "path": "/sftp-config.json", "path_match": "prefix", "created_at": 1792154628},
+    {"id": "67b7f40a073d3234", "kind": "honeypot", "path": "/version", "path_match": "prefix", "created_at": 1792154643},
+    {"id": "70b36a2230e03379", "kind": "honeypot", "path": "/docker-compose.yml", "path_match": "prefix", "created_at": 1792154659}
+  ]
+}
+```
+
+The set covers WordPress, `.env`, `.git`, backup files, and other common probes. Import it from the GUI or
+from the Rails console:
+
+```ruby
+json = File.read("starter-honeypots.json")
+Parry::RuleTransfer.import(json, replace: false)
+```
+
 **An import is all or nothing.** Every rule in the file is validated as it is applied, and if any one of them is
 rejected the whole import is rolled back and each problem is listed - a file with a typo in it can never leave
 you with half a rule set. That holds for "replace" too: the rules you have now are only let go once the
@@ -249,6 +287,17 @@ Rules you define yourself in an initializer keep working; Parry only adds to the
 
 If Redis is unreachable, Parry logs the error and keeps serving the last snapshot it loaded rather than taking
 requests down with it.
+
+## Unblocking yourself from the Rails console
+
+If a rule locks you out of the Parry GUI, open your application's Rails console and unblock your IP address:
+
+```ruby
+Parry.unblock("203.0.113.4")
+```
+
+This removes Parry blocklist rules covering the address, releases it from any honeypot, and resets its current
+throttle counters.
 
 ## Things worth knowing
 
