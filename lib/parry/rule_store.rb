@@ -5,8 +5,7 @@ require "securerandom"
 module Parry
   class RuleStore
     def all
-      raw = Parry.with_redis { |redis| redis.hgetall(rules_key) }
-      raw.values.filter_map { |json| Rule.from_json(json) }.sort_by { |rule| [rule.created_at || 0, rule.id.to_s] }
+      backend.rules.values.filter_map { |json| Rule.from_json(json) }.sort_by { |rule| [rule.created_at || 0, rule.id.to_s] }
     end
 
     def where(kind:)
@@ -14,12 +13,12 @@ module Parry
     end
 
     def find(id)
-      json = Parry.with_redis { |redis| redis.hget(rules_key, id.to_s) }
+      json = backend.rule(id)
       json && Rule.from_json(json)
     end
 
     def count
-      Parry.with_redis { |redis| redis.hlen(rules_key) }
+      backend.rules_count
     end
 
     def save(rule)
@@ -28,21 +27,13 @@ module Parry
       return false unless rule.valid?
 
       rule.created_at ||= Time.now.to_i
-      Parry.with_redis do |redis|
-        redis.hset(rules_key, rule.id, rule.to_json)
-        redis.incr(version_key)
-      end
+      backend.save_rule(rule.id, rule.to_json, kind: rule.kind, created_at: rule.created_at)
       rule.persisted = true
       true
     end
 
     def delete(id)
-      deleted = Parry.with_redis do |redis|
-        count = redis.hdel(rules_key, id.to_s)
-        redis.incr(version_key) if count > 0
-        count
-      end
-      deleted > 0
+      backend.delete_rules([id]) > 0
     end
 
     def delete_matching_ip(ip, kinds: ["blocklist"])
@@ -50,39 +41,42 @@ module Parry
       matching = all.select { |rule| kinds.include?(rule.kind) && rule.matches_ip?(ip) }
       return matching if matching.empty?
 
-      Parry.with_redis do |redis|
-        redis.hdel(rules_key, matching.map(&:id))
-        redis.incr(version_key)
-      end
+      backend.delete_rules(matching.map(&:id))
       matching
     end
 
+    # Checked on every request. The ActiveRecord backend answers from an
+    # in-process cache that is at most +config.version_cache_ttl+ old.
     def version
-      Parry.with_redis { |redis| redis.get(version_key) }.to_i
+      backend.version
     end
 
     def bump_version
-      Parry.with_redis { |redis| redis.incr(version_key) }
+      backend.bump_version
     end
 
     def rule_set
-      current = version
+      current = backend.fresh_version
       RuleSet.new(all, current, Parry.honeypots.to_h)
     end
 
     def clear
-      Parry.with_redis do |redis|
-        redis.del(rules_key)
-        redis.incr(version_key)
-      end
+      backend.clear_rules
     end
 
+    # Redis key names, kept for anyone reading Parry's Redis data directly.
     def rules_key
-      "#{Parry.config.key_prefix}:rules"
+      Backends::Redis.key("rules")
     end
 
     def version_key
-      "#{Parry.config.key_prefix}:rules_version"
+      Backends::Redis.key("rules_version")
+    end
+
+    private
+
+    def backend
+      Parry.backend
     end
   end
 end
