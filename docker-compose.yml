@@ -1,11 +1,15 @@
 # Services for the test suite, one per storage backend it runs against:
 #
 #   bundle exec rake test:redis      # redis
-#   bundle exec rake test:postgres   # none: uses the PostgreSQL server on 5432
+#   bundle exec rake test:postgres   # postgres, or any PostgreSQL server on 5432
 #   bundle exec rake test:mysql      # mysql
 #   bundle exec rake test            # SQLite, needs none of these
 #
-# Ports are moved off the defaults so they do not clash with a local server.
+# Redis and MySQL are moved off the default ports so they do not clash with a
+# local server. PostgreSQL keeps 5432 and is opt-in, for machines that do not
+# run one already:
+#
+#   docker compose --profile postgres up -d
 services:
   redis:
     image: redis:7-alpine
@@ -16,6 +20,19 @@ services:
       - "6380:6379"
     volumes:
       - ./tmp/redis:/data
+
+  postgres:
+    image: postgres:17-alpine
+    profiles: [postgres]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: parry_test
+      # Test-only server, reachable from this machine only.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - ./tmp/postgres:/var/lib/postgresql/data
 
   mysql:
     image: mysql:8.4

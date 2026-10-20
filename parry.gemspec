@@ -37,4 +37,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "activerecord", ">= 7.1"
   spec.add_dependency "activesupport", ">= 7.1"
   spec.add_dependency "rack-attack", ">= 6.6"
+  spec.add_dependency "redis", ">= 4.2"
 end

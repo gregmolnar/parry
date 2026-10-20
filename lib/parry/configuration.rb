@@ -4,14 +4,14 @@ module Parry
   # Runtime configuration for the engine.
   #
   #   Parry.configure do |config|
-  #     config.backend = :active_record
+  #     config.backend = :redis
   #     config.max_tracked_hosts = 5_000
   #   end
   class Configuration
     BACKENDS = %i[active_record redis].freeze
 
-    # Where rules, caught hosts and blocked hosts are stored: :active_record
-    # (the default, tables created by `rails generate parry:install`) or :redis.
+    # Where rules, caught hosts and blocked hosts are stored: :redis (the
+    # default) or :active_record (tables created by `rails generate parry:install`).
     attr_reader :backend
 
     # ActiveRecord backend: options passed to +connects_to+ on
@@ -63,7 +63,7 @@ module Parry
     attr_accessor :regex_timeout
 
     def initialize
-      @backend = :active_record
+      @backend = :redis
       @connects_to = nil
       @version_cache_ttl = 2
       @tracker_trim_every = 1000

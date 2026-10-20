@@ -23,7 +23,8 @@ Parry has no opinion about authentication - mount it behind whatever your applic
 gem "parry"
 ```
 
-Parry stores its rules in your application's database by default. Create the tables:
+Parry stores its rules in Redis by default (see [Redis](#redis-default) for the connection settings). To keep them
+in your application's database instead, create the tables:
 
 ```sh
 bin/rails generate parry:install
@@ -31,8 +32,8 @@ bin/rails db:migrate
 ```
 
 The generator writes a migration for four tables - `parry_rules`, `parry_versions`, `parry_blocked_hosts` and
-`parry_caught_hosts` - and a commented `config/initializers/parry.rb`. PostgreSQL, MySQL/MariaDB and SQLite are
-supported. To keep the rules in Redis instead, see [Storage backends](#storage-backends).
+`parry_caught_hosts` - and a `config/initializers/parry.rb` that selects the ActiveRecord backend. PostgreSQL,
+MySQL/MariaDB and SQLite are supported. See [Storage backends](#storage-backends) for both backends.
 
 Make sure Rack::Attack itself is set up in your application:
 
@@ -101,9 +102,9 @@ end
 ```ruby
 # config/initializers/parry.rb
 Parry.configure do |config|
-  # Where rules, caught hosts and blocked hosts are stored: :active_record or :redis.
-  # Default: :active_record.
-  config.backend = :active_record
+  # Where rules, caught hosts and blocked hosts are stored: :redis or :active_record.
+  # Default: :redis.
+  config.backend = :redis
 
   # Register the Rack::Attack hooks on boot. Default: true.
   # Set to false to call Parry.install! yourself.
@@ -126,7 +127,7 @@ The options specific to each backend are described below.
 
 ## Storage backends
 
-### ActiveRecord (default)
+### ActiveRecord
 
 Rules, caught hosts and blocked hosts live in the tables `rails generate parry:install` creates. Two things happen
 on the request path, and both are kept cheap:
@@ -196,12 +197,7 @@ end
 
 Set `connects_to` in an initializer: it is applied the first time Parry touches the database.
 
-### Redis
-
-```ruby
-# Gemfile - Parry no longer depends on redis itself
-gem "redis"
-```
+### Redis (default)
 
 ```ruby
 Parry.configure do |config|
@@ -216,13 +212,12 @@ Parry.configure do |config|
 end
 ```
 
-Selecting `:redis` without the `redis` gem in your bundle raises a `Parry::Error` saying so. The Redis backend
-checks the version with one `GET` per request and trims the blocked hosts list on every record; the
+The Redis backend checks the version with one `GET` per request and trims the blocked hosts list on every record; the
 ActiveRecord-only options above do not apply to it.
 
 ## Redis persistence
 
-This section only applies to the [Redis backend](#redis). Parry's rules and the hosts its honeypots caught are
+This section only applies to the [Redis backend](#redis-default). Parry's rules and the hosts its honeypots caught are
 **data, not cache**. If the Redis holding them loses its contents, your rules are gone and every host you blocked
 is free again. Two ways that happens:
 
@@ -452,6 +447,7 @@ The same test suite runs against every storage backend, using a dummy Rails appl
 bin/setup
 bundle exec rake test            # ActiveRecord on SQLite, no services needed
 docker compose up -d             # Redis on 6380, MySQL on 3307
+docker compose --profile postgres up -d   # also PostgreSQL on 5432, if you do not run one already
 bundle exec rake test:redis
 bundle exec rake test:postgres
 bundle exec rake test:mysql
@@ -460,7 +456,7 @@ bundle exec rake                 # every backend + standard
 
 The SQLite run keeps Parry's tables in a database of their own through `config.connects_to`; the PostgreSQL and
 MySQL runs share the primary connection. The PostgreSQL run uses the server on `127.0.0.1:5432` as `postgres`
-(password from `PGPASSWORD`) and creates `parry_test` if it is missing. `PARRY_TEST_POSTGRES_URL`, `PARRY_TEST_MYSQL_URL` and
+(password from `PGPASSWORD`; the compose service needs none) and creates `parry_test` if it is missing. `PARRY_TEST_POSTGRES_URL`, `PARRY_TEST_MYSQL_URL` and
 `PARRY_TEST_REDIS_URL` point the suite elsewhere - it only accepts local servers, since every test wipes Parry's
 data.
 

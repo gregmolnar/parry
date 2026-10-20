@@ -2,8 +2,8 @@
 
 Parry.configure do |config|
   # Where Parry keeps its rules, caught hosts and blocked hosts:
-  # :active_record (the tables from db/migrate/*_create_parry_tables.rb) or :redis.
-  # config.backend = :active_record
+  # :active_record (the tables from db/migrate/*_create_parry_tables.rb) or :redis (the default).
+  config.backend = :active_record
 
   # Keep Parry's tables in a database of their own (an entry in config/database.yml).
   # Generate the migration with `rails generate parry:install --database=parry`.

@@ -8,6 +8,7 @@ PATH
       activesupport (>= 7.1)
       rack-attack (>= 6.6)
       railties (>= 7.1)
+      redis (>= 4.2)
 
 GEM
   remote: https://rubygems.org/

@@ -4,8 +4,8 @@ require "test_helper"
 
 module Parry
   class ConfigurationTest < ActiveSupport::TestCase
-    test "ActiveRecord is the default backend" do
-      assert_equal :active_record, Configuration.new.backend
+    test "Redis is the default backend" do
+      assert_equal :redis, Configuration.new.backend
     end
 
     test "the backend can be given as a string or a symbol" do
