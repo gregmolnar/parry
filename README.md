@@ -2,12 +2,16 @@
 
 Parry is a mountable Rails engine that puts a GUI in front of [Rack::Attack](https://github.com/rack/rack-attack).
 
+![Parry rules list](screenshot1.png)
+
 Rack::Attack rules normally live in an initializer, so changing them means a deploy. Parry keeps its rules in
 Redis instead and applies them to every application process as soon as you save them:
 
 - manage **blocklists**, **safelists**, **throttles** and **honeypots** from a web page
 - see the hosts that were **blocked or throttled**, with hit counts and the rule they matched
 - **unblock** a host: the blocklist rules covering it are deleted and its throttle counters are reset
+
+![Parry blocked hosts list](screenshot2.png)
 
 Parry has no opinion about authentication - mount it behind whatever your application already uses.
 
