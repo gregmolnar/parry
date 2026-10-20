@@ -63,7 +63,7 @@ module Parry
       end
 
       def apply(entries, replace:)
-        snapshot = Parry.with_redis { |redis| redis.hgetall(Parry.store.rules_key) }
+        snapshot = Parry.backend.rules
         errors = []
         imported = 0
 
@@ -103,11 +103,7 @@ module Parry
       end
 
       def restore(snapshot)
-        Parry.with_redis do |redis|
-          redis.del(Parry.store.rules_key)
-          snapshot.each { |id, json| redis.hset(Parry.store.rules_key, id, json) }
-          redis.incr(Parry.store.version_key)
-        end
+        Parry.backend.replace_rules(snapshot)
       end
 
       def failure(message)

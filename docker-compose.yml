@@ -1,3 +1,11 @@
+# Services for the test suite, one per storage backend it runs against:
+#
+#   bundle exec rake test:redis      # redis
+#   bundle exec rake test:postgres   # postgres
+#   bundle exec rake test:mysql      # mysql
+#   bundle exec rake test            # SQLite, needs none of these
+#
+# Ports are moved off the defaults so they do not clash with a local server.
 services:
   redis:
     image: redis:7-alpine
@@ -8,3 +16,24 @@ services:
       - "6380:6379"
     volumes:
       - ./tmp/redis:/data
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: parry
+      POSTGRES_PASSWORD: parry
+      POSTGRES_DB: parry_test
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./tmp/postgres:/var/lib/postgresql/data
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: parry
+      MYSQL_DATABASE: parry_test
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./tmp/mysql:/var/lib/mysql

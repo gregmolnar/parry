@@ -120,8 +120,10 @@ module Parry
 
     test "a regex that backtracks catastrophically gives up instead of hanging" do
       # A backreference defeats the memoisation that makes Ruby shrug off most
-      # of the textbook ReDoS patterns, so this one really does run away.
-      rule = Rule.new(kind: "honeypot", path_match: "regex", path: "(a+)+\\1b$")
+      # of the textbook ReDoS patterns. Newer Onigmo releases also fail fast when
+      # a required literal ("b") is missing from the subject, so this pattern has
+      # none and really does run away.
+      rule = Rule.new(kind: "honeypot", path_match: "regex", path: "(a|a?)+\\1$")
       candidate = "/" + ("a" * 40) + "!"
 
       started = Process.clock_gettime(Process::CLOCK_MONOTONIC)

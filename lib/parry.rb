@@ -9,6 +9,8 @@ require "rack/attack"
 
 require_relative "parry/version"
 require_relative "parry/configuration"
+require_relative "parry/backends"
+require_relative "parry/backends/redis"
 require_relative "parry/rule"
 require_relative "parry/rule_set"
 require_relative "parry/rule_store"
@@ -34,6 +36,17 @@ module Parry
       yield config
     end
 
+    # The storage backend picked by +config.backend+, built on first use so
+    # neither ActiveRecord nor the redis gem is loaded until it is needed.
+    def backend
+      current = @backend
+      return current if current && @backend_name == config.backend
+
+      @backend_name = config.backend
+      @backend = Backends.build(@backend_name)
+    end
+
+    # Yields the Redis client of the Redis backend.
     def with_redis(&block)
       client = config.redis
       client.respond_to?(:with) ? client.with(&block) : yield(client)
@@ -80,6 +93,8 @@ module Parry
     end
 
     def reset!
+      @backend = nil
+      @backend_name = nil
       @store = nil
       @tracker = nil
       @honeypots = nil

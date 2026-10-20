@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = "A Rails engine that provides a GUI for Rack::Attack"
   spec.description = "Parry is a mountable Rails engine to manage Rack::Attack rules " \
     "(blocklists, safelists and throttles) at runtime, inspect blocked hosts and unblock them. " \
-    "Rules are stored in Redis and applied without a redeploy."
+    "Rules are stored in your database through ActiveRecord (or in Redis) and applied without a redeploy."
   spec.homepage = "https://github.com/gregmolnar/parry"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
@@ -34,7 +34,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "railties", ">= 7.1"
   spec.add_dependency "actionpack", ">= 7.1"
   spec.add_dependency "activemodel", ">= 7.1"
+  spec.add_dependency "activerecord", ">= 7.1"
   spec.add_dependency "activesupport", ">= 7.1"
   spec.add_dependency "rack-attack", ">= 6.6"
-  spec.add_dependency "redis", ">= 4.2"
 end
