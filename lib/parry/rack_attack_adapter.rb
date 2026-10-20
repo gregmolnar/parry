@@ -3,12 +3,12 @@
 require "rack/attack"
 
 module Parry
-  # Bridges the rules stored in Redis into Rack::Attack.
+  # Bridges the rules stored by the backend into Rack::Attack.
   #
   # A safelist and a blocklist check are registered once; both consult the
   # current snapshot of the rules. Throttles have to be registered as real
   # Rack::Attack throttles, so the snapshot is refreshed whenever the version
-  # counter in Redis changes - that is what makes GUI edits visible to every
+  # counter changes - that is what makes GUI edits visible to every
   # process without a redeploy.
   class RackAttackAdapter
     SAFELIST_NAME = "parry/safelist"
@@ -55,7 +55,7 @@ module Parry
       @installed = true
     end
 
-    # Refreshes the snapshot when the version counter changed. Redis problems
+    # Refreshes the snapshot when the version counter changed. Storage problems
     # must not take the application down, so the last known snapshot is kept.
     def sync!(force: false)
       current = Parry.store.version
@@ -162,7 +162,7 @@ module Parry
 
     private
 
-    # Records the host, but a Redis failure must not let it through: the
+    # Records the host, but a storage failure must not let it through: the
     # caller blocks the request either way.
     def catch_host(ip, rule, path)
       Parry.honeypots.record(ip, rule: rule, path: path)

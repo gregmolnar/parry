@@ -1,0 +1,45 @@
+# frozen_string_literal: true
+
+class CreateParryTables < ActiveRecord::Migration<%= migration_version %>
+  def change
+    # Rules, stored as the JSON Parry::Rule#to_json produces. created_at is
+    # epoch seconds, like the rest of Parry.
+    create_table :parry_rules, id: false do |t|
+      t.string :id, null: false, primary_key: true
+      t.string :kind, null: false
+      t.text :payload, null: false
+      t.bigint :created_at
+    end
+    add_index :parry_rules, :kind
+
+    # A single row holding the counter every process compares against its
+    # snapshot of the rules.
+    create_table :parry_versions do |t|
+      t.bigint :version, null: false, default: 0
+    end
+
+    # Hosts Rack::Attack blocked or throttled. last_seen and first_seen are
+    # epoch seconds.
+    create_table :parry_blocked_hosts do |t|
+      t.string :ip, null: false
+      t.bigint :hits, null: false, default: 0
+      t.string :match_type
+      t.text :rule
+      t.text :path
+      t.bigint :first_seen
+      t.bigint :last_seen
+    end
+    add_index :parry_blocked_hosts, :ip, unique: true
+    add_index :parry_blocked_hosts, :last_seen
+
+    # Hosts caught by a honeypot. caught_at is epoch seconds.
+    create_table :parry_caught_hosts do |t|
+      t.string :ip, null: false
+      t.string :rule_id
+      t.text :rule
+      t.text :path
+      t.bigint :caught_at
+    end
+    add_index :parry_caught_hosts, :ip, unique: true
+  end
+end
