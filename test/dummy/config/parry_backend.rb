@@ -78,7 +78,7 @@ module ParryTestBackend
         [primary, parry].each { |path| FileUtils.rm_f([path, "#{path}-wal", "#{path}-shm"]) }
 
         ActiveRecord::Base.configurations = {
-          "test" => {
+          ActiveRecord::ConnectionHandling::DEFAULT_ENV.call => {
             "primary" => {"adapter" => "sqlite3", "database" => primary},
             "parry" => {"adapter" => "sqlite3", "database" => parry}
           }
