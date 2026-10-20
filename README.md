@@ -451,7 +451,7 @@ The same test suite runs against every storage backend, using a dummy Rails appl
 ```sh
 bin/setup
 bundle exec rake test            # ActiveRecord on SQLite, no services needed
-docker compose up -d             # Redis on 6380, PostgreSQL on 5433, MySQL on 3307
+docker compose up -d             # Redis on 6380, MySQL on 3307
 bundle exec rake test:redis
 bundle exec rake test:postgres
 bundle exec rake test:mysql
@@ -459,7 +459,8 @@ bundle exec rake                 # every backend + standard
 ```
 
 The SQLite run keeps Parry's tables in a database of their own through `config.connects_to`; the PostgreSQL and
-MySQL runs share the primary connection. `PARRY_TEST_POSTGRES_URL`, `PARRY_TEST_MYSQL_URL` and
+MySQL runs share the primary connection. The PostgreSQL run uses the server on `127.0.0.1:5432` as `postgres`
+(password from `PGPASSWORD`) and creates `parry_test` if it is missing. `PARRY_TEST_POSTGRES_URL`, `PARRY_TEST_MYSQL_URL` and
 `PARRY_TEST_REDIS_URL` point the suite elsewhere - it only accepts local servers, since every test wipes Parry's
 data.
 

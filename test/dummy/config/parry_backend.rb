@@ -23,7 +23,7 @@ module ParryTestBackend
   TABLES = %w[parry_rules parry_versions parry_blocked_hosts parry_caught_hosts].freeze
 
   DATABASE_URLS = {
-    "postgres" => -> { ENV.fetch("PARRY_TEST_POSTGRES_URL", "postgres://parry:parry@127.0.0.1:5433/parry_test") },
+    "postgres" => -> { ENV.fetch("PARRY_TEST_POSTGRES_URL", "postgres://postgres@127.0.0.1:5432/parry_test") },
     "mysql" => -> { ENV.fetch("PARRY_TEST_MYSQL_URL", "trilogy://root:parry@127.0.0.1:3307/parry_test") }
   }.freeze
 
@@ -89,7 +89,17 @@ module ParryTestBackend
         variable = "PARRY_TEST_#{name.upcase}_URL"
         refuse_remote!(database_url, variable, "PARRY_ALLOW_REMOTE_TEST_DATABASE")
         ActiveRecord::Base.establish_connection(database_url)
+        create_database!
       end
+    end
+
+    # The PostgreSQL run uses the local server, which may not have the test
+    # database yet.
+    def create_database!
+      ActiveRecord::Base.connection.verify!
+    rescue ActiveRecord::NoDatabaseError
+      ActiveRecord::Tasks::DatabaseTasks.create(ActiveRecord::Base.connection_db_config)
+      ActiveRecord::Base.establish_connection(database_url)
     end
 
     # Every test wipes Parry's data, so only local servers are accepted.
