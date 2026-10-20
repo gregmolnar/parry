@@ -16,4 +16,10 @@ group :test do
   gem "rails", ">= 7.1"
   gem "rack-test"
   gem "puma"
+
+  # Every storage backend runs the same suite; see the Rakefile.
+  gem "redis", ">= 4.2"
+  gem "sqlite3", ">= 1.4"
+  gem "pg"
+  gem "trilogy"
 end
